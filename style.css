@@ -1,0 +1,255 @@
+.complete_button {
+    width: 100%;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+}
+
+.complete_button_wrapper {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.point_wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background-color: blue;
+    color: white;
+}
+
+.point_wrapper .point_value {
+    margin-right: 2px;
+}
+
+.checkmark {
+    border: 1px solid rgba(160, 160, 160);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.checkmark_wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkmark_wrapper .logo {
+    display: none;
+    width: 20px;
+    height: 20px;
+}
+
+.checkmark_wrapper .logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.badge_container {
+    width: calc(100% - 50px);
+    margin: 0 auto;
+    /* border: 1px solid black; */
+    margin-top: 20px;
+}
+
+.badge_wrapper {
+    padding: 20px;
+}
+
+.badge.badge_item {
+    background-color: transparent;
+    padding: 0px;
+    /* border: 1px solid black; */
+    border-radius: 0px;
+}
+
+.badge_item_wrapper {
+    width: 100%;
+}
+
+.no_badge_text {
+    display: none;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.badge_list {
+    display: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+}
+
+
+
+body {
+    position: relative;
+}
+
+.point_popup {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255);
+    z-index: 99999;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, .1);
+    transform: translateY(100%);
+    transition: all .2s;
+}
+
+.point_popup_visible {
+    transform: translateY(0px);
+}
+
+.point_popup_wrapper {
+    width: calc(100% - 40px);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.point_popup_container {
+    padding: 24px 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.point_popup_container .content {
+    margin-right: 30px;
+}
+
+.point_popup_container .heading {
+    color: rgb(31, 41, 55);
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    text-align: left;
+}
+
+.point_popup_container .text {
+    color: rgb(55, 65, 81);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+}
+
+.point_popup_container .point_text {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    text-align: center;
+}
+
+.point_popup_container .point_value_wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.point_popup_container .point_value {
+    color: rgb(13, 148, 136);
+    font-size: 52px;
+    margin-right: 14px;
+    font-weight: 400;
+    line-height: 1;
+}
+
+.point_popup_container .point_xp_text {
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    background-color: rgb(13, 148, 136);
+    padding: 0px 8px;
+    border-radius: 100px;
+    margin-top: 7px;
+}
+
+.header_point {
+    display: flex;
+    background-color: blue;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 15px;
+    margin: 0 4px;
+}
+
+.header_point .point_value {
+    margin-right: 2px;
+}
+
+.celebration_box {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 99999;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#more_actions_btn[aria-haspopup] {
+    display: none;
+}
+
+.slide-nav {
+    width: 40PX;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    z-index: 99;
+    border-radius: 50%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, .15);
+}
+
+.slick-prev.slide-nav {
+    left: -16px;
+}
+
+.slick-next.slide-nav {
+    right: -16px;
+}
+
+.slide-nav svg {
+    display: block;
+    width: 32px;
+    height: 32px;
+}
+
+.slide-nav::before {
+    content: '' !important;
+}
+
+@media screen and (max-width: 664px) {
+    .point_popup_container {
+        padding: 20px 0px;
+    }
+}
+
+@media screen and (max-width: 500px) {
+    .point_popup_container {
+        padding: 16px 0px;
+    }
+
+    .point_popup_container .text {
+        font-size: 13px;
+    }
+
+    .point_popup_container .point_text {
+        font-size: 11px;
+    }
+}

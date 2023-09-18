@@ -1,0 +1,496 @@
+<style>
+  *:is(p, div, span):not([hidden])[data-starts-with^="["][data-ends-with$="]"] {
+    display: none;
+  }
+
+  .complete_button {
+    width: 100%;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+  }
+  .complete_button_wrapper {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .point_wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    border-radius: 99px;
+    background-color: blue;
+    color: white;
+  }
+
+  .checkmark {
+    border: 1px solid rgba(160, 160, 160);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+  }
+  .checkmark_wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .checkmark_wrapper .logo {
+    display: none;
+    width: 20px;
+    height: 20px;
+  }
+  .checkmark_wrapper .logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .badge_container {
+    width: 100%;
+    border: 1px solid black;
+    margin-top: 20px;
+  }
+  .badge_wrapper {
+    padding: 20px;
+  }
+  .no_badge_text {
+    display: none;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .badge_list {
+    display: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
+
+
+
+  body {
+    position: relative;
+  }
+  .point_popup {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255);
+    z-index: 99999;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, .1);
+    transform: translateY(100%);
+    transition: all .2s;
+  }
+  .point_popup_visible {
+      transform: translateY(0px);
+  }
+  .point_popup_wrapper {
+    width: calc(100% - 40px);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .point_popup_container {
+    padding: 24px 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .point_popup_container .content {
+    margin-right: 30px;
+  }
+  .point_popup_container .heading {
+    color: rgb(31, 41, 55);
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    text-align: left;
+  }
+  .point_popup_container .text {
+    color: rgb(55, 65, 81);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .point_popup_container .point_text {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .point_popup_container .point_value_wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .point_popup_container .point_value {
+    color: rgb(13, 148, 136);
+    font-size: 52px;
+    margin-right: 14px;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .point_popup_container .point_xp_text {
+    color: rgb(255, 255, 255);
+    font-size: 11px;
+    background-color: rgb(13, 148, 136);
+    padding: 0px 8px;
+    border-radius: 100px;
+    margin-top: 7px;
+  }
+  @media screen and (max-width: 664px) {
+    .point_popup_container {
+      padding: 20px 0px;
+    }
+  }
+  @media screen and (max-width: 500px) {
+    .point_popup_container {
+      padding: 16px 0px;
+    }
+    .point_popup_container .text {
+      font-size: 13px;
+    }
+    .point_popup_container .point_text {
+      font-size: 11px;
+    }
+  }
+</style>
+
+<script>
+  const BMS_AUTH_TOKEN = 'bms_auth_token'
+  let isGuestUser;
+  let userAuthToken;
+
+  let videoPoint;
+  let badgeUrl;
+  let userData = {
+    point: 0,
+    badge: [],
+  }
+
+  let bodyHtmlElement;
+  let completeButtonHtmlElement;
+  let pointPopupHtmlElement;
+  let markAsWatchedHtmlElement;
+
+  let pointPopupSetTnterval;
+
+  function animateNumber(htmlElement, startValue, endValue, duration, interval = 50) {
+    const steps = (duration / interval);
+    const stepSize = (endValue - startValue) / steps;
+    let currentValue = startValue;
+    let currentStep = 0;
+    
+    const updateNumber = () => {
+      currentValue += stepSize;
+      currentStep++;
+  
+      if (currentStep >= steps) {
+        currentValue = endValue;
+        clearInterval(animationInterval);
+      }
+  
+      htmlElement.textContent = Math.round(currentValue);
+    };
+
+    const animationInterval = setInterval(updateNumber, interval);
+  }
+
+  async function addUser() {
+    let userId = bodyHtmlElement.getAttribute('user-id');
+    let productId = bodyHtmlElement.getAttribute('storefront-url');
+    
+    try {
+      const result = await fetch(`http://localhost:4400/api/addUser`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          platform: 'Uscreen',
+          userId,
+          productId,
+        }),
+      });
+        
+      let response = await result.json();
+      if (response.code === 200) {
+        authToken = response.data['x-auth-token'];
+        localStorage.setItem(BMS_AUTH_TOKEN, authToken)
+      }   
+    } catch(error) {
+      console.error(error)
+    }
+  }
+
+  async function getUserData() {
+    try {
+      const result = await fetch(`http://localhost:4400/api/getData`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'x-auth-token': userAuthToken,
+        },
+      });
+      
+      let response = await result.json();
+      if (response.code === 200) {
+        userData = response.data.data;
+        console.log(userData);
+      }    
+    } catch(error) {
+      console.error(error)
+    }
+  }
+
+  async function setUserData(userData) {
+    try {
+      const result = await fetch(`http://localhost:4400/api/addData`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'x-auth-token': userAuthToken,
+        },
+        body: JSON.stringify({
+          data: userData,
+        }),
+      });
+      
+      let response = await result.json();
+      if (response.code === 200) {
+        console.log('response', response);
+      }
+    } catch(error) {
+      console.error(error)
+    }
+  }
+
+  function addMarkAsCompleteButton() {
+    let pageUrl = window.location.href
+    if (!pageUrl.includes('/programs')) return;
+
+    if (document.querySelector('.collection-videos')) return;
+
+    let contentHtmlElement = document.querySelector('.editor-content')
+    if (!contentHtmlElement) return;
+
+    let pageContainerHtmlElement = document.querySelector('.page .container')
+    markAsWatchedHtmlElement = document.querySelector('#program_buttons_video_watched button')
+
+    let contentChildrenHtmlElement = Array.from(contentHtmlElement.children)
+    let point = 0
+    
+    contentChildrenHtmlElement.forEach(htmlElement => {
+      let textContent = htmlElement.textContent.trim()
+      if (textContent.charAt(0) == '[' && 
+          textContent.charAt(textContent.length - 1) == ']') {
+        point = textContent.substring(1, textContent.length - 1).trim();
+        videoPoint = Number(point);
+        // htmlElement.remove();
+      } else if (textContent.charAt(0) == '(' && 
+        textContent.charAt(textContent.length - 1) == ')') {
+        let index = textContent.indexOf('=');
+        badgeUrl = textContent.substring(index + 1, textContent.length - 1).trim();
+        console.log(badgeUrl)
+      }
+    })
+
+    let pointHtml = point == 0 ? '' : `
+      <div class="point_wrapper">
+        <div class="point_value">${point}</div>
+        <div class="point_xp_text">XP</div>
+      </div>
+    `;
+
+    pageContainerHtmlElement.insertAdjacentHTML('beforeend', `
+      <div class="complete_button">
+        <div class="complete_button_wrapper">
+          <div class="checkmark">
+            <div class="checkmark_wrapper">
+              <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" 
+                fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/>
+                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="content">
+            Mark as complete
+          </div>
+          <div class="point">${pointHtml}</div>
+        </div>
+      </div>
+    `)
+  }
+
+  function addMarkAsCompleteButtonListener() {
+    completeButtonHtmlElement = document.querySelector('.complete_button');
+    if (!completeButtonHtmlElement) return;
+
+    completeButtonHtmlElement.onclick = (event) => {
+      if (!userData.point) userData.point = 0;
+      if (!userData.badge) userData.badge = [];
+      let startPoint = Number(userData.point);
+
+      let logoHtmlElement = completeButtonHtmlElement.querySelector('.logo');
+      let contentHtmlElement = completeButtonHtmlElement.querySelector('.content');
+
+      if (completeButtonHtmlElement.classList.contains('complete_button_selected')) {
+        completeButtonHtmlElement.classList.remove('complete_button_selected');
+        logoHtmlElement.style.display = 'none';
+        contentHtmlElement.textContent = 'Mark as complete'
+
+        userData.point = userData.point - videoPoint;
+        userData.badge = userData.badge.filter(badge => badge !== badgeUrl);
+      } else {
+        completeButtonHtmlElement.classList.add('complete_button_selected');
+        logoHtmlElement.style.display = 'block';
+        contentHtmlElement.textContent = 'Complete';
+
+        const audioUrl = 'https://res.cloudinary.com/dp0kx2htu/video/upload/v1691750346/coin-sound_meec6q.webm';
+        const audioElement = document.createElement("audio");
+        audioElement.src = audioUrl;
+        audioElement.play();
+
+        userData.point = userData.point + videoPoint
+        userData.badge.push(badgeUrl);
+      }
+
+      let markAsWatchedHtmlElement = document.querySelector('#program_buttons_video_watched button');
+      markAsWatchedHtmlElement.click();
+
+      if (userData.point < 0 ) userData.point = 0;
+      let endPoint = userData.point;
+
+      console.log(userData);
+      setUserData(userData);
+
+      let duration = 300;
+      if (videoPoint >= 5) duration = 500 
+      animateNumber(pointPopupHtmlElement.querySelector('.point_value'), startPoint, endPoint, duration, 50)
+      pointPopupHtmlElement.classList.add('point_popup_visible');
+
+      if (pointPopupSetTnterval) clearInterval(pointPopupSetTnterval)
+      pointPopupSetTnterval = setTimeout(() => {
+        pointPopupHtmlElement.classList.remove('point_popup_visible')
+      }, 3000)
+    }
+  }
+
+  function addPointPopup() {
+    bodyHtmlElement.insertAdjacentHTML('afterend', `
+      <div class="point_popup">
+        <div class="point_popup_wrapper">
+          <div class="point_popup_container">
+            <div class="content">
+              <div class="heading">
+                Points you have collected 👉
+              </div>
+              <div class="text">
+                Complete the next lesson to earn more points and appear on the 
+                leaderboard.
+              </div>
+            </div>
+            <div class="point">
+              <div class="point_text">
+                TOTAL XP POINTS
+              </div>
+              <div class="point_value_wrapper">
+                <div class="point_value"></div>
+                <div class="point_xp_text">XP</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+
+    pointPopupHtmlElement = document.querySelector('.point_popup');
+
+    let successFlagHtmlElement = document.querySelector('#program_buttons_video_watched_form .text-ds-success-fg')
+
+    if (successFlagHtmlElement) {
+      completeButtonHtmlElement.classList.add('complete_button_selected');
+      completeButtonHtmlElement.querySelector('.logo').style.display = 'block';
+      completeButtonHtmlElement.querySelector('.content').textContent = 'Complete'
+    }
+  }
+
+  function addBagdeContainer() {
+    let pageUrl = window.location.href
+    if (!pageUrl.includes('/catalog')) return;
+
+    let innerPageHtmlElement = document.querySelector('#page > div > div');
+    innerPageHtmlElement.insertAdjacentHTML('beforeend', `
+      <div class="badge_container">
+        <div class="badge_wrapper">
+          <div class="no_badge_text">No badges collected. Complete lessons to collect badges.</div>
+          <div class="badge_list"></div>
+        </div>
+      </div>
+    `)
+
+    let badgeContainerHtmlElement = document.querySelector('.badge_container')
+    let noBadgeText = badgeContainerHtmlElement.querySelector('.no_badge_text')
+    let badgeListHtmlElement = document.querySelector('.badge_list')
+
+    if (userData.badge && userData.badge.length > 0) {
+      badgeListHtmlElement.style.display = 'block'
+    } else {
+      noBadgeText.style.display = 'block'
+      badgeListHtmlElement.style.display = 'grid'
+    }
+  }
+
+  function addBadgeToList() {
+  console.log('addBadgeToList')
+    let badgeHtml = userData.badge.reduce((acc, badge) => {
+      return acc += (`
+        <div class="badge badge_item">
+          <div class="badge_wrapper">
+            <div class="badge_image">
+              <img src="${badge}">
+            </div>
+            <div class="badge_title"></div>
+          </div>
+        </div>
+      `)
+    }, '')
+    let badgeListHtmlElement = document.querySelector('.badge_container .badge_list');
+      badgeListHtmlElement.innerHTML = badgeHtml;
+  }
+
+  function checkForLogin() {
+    userAuthToken = localStorage.getItem(BMS_AUTH_TOKEN)
+
+    if (userAuthToken) {
+      getUserData()
+    } else {
+      addUser()
+    }
+  }
+
+  window.onload = setTimeout(() => {
+    bodyHtmlElement = document.querySelector('body')
+
+    let isGuestUser = bodyHtmlElement.getAttribute('user-guest')
+    if (isGuestUser === 'true') return;
+
+    addMarkAsCompleteButton();
+    addMarkAsCompleteButtonListener();
+    addPointPopup();
+    addBagdeContainer();
+    setTimeout(() => {
+      addBadgeToList();
+    }, 1000)
+    checkForLogin();
+  }, 2000);
+</script>
