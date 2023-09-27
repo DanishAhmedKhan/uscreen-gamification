@@ -26,6 +26,7 @@ let celebrationBoxHtmlElement;
 let isCollectionVideoPage = false;
 
 let pointPopupSetTnterval;
+let videoDurationInterval;
 
 const celebrations = {
     ester_egg: {
@@ -128,8 +129,16 @@ function addMarkAsCompleteButton() {
     let contentHtmlElement = document.querySelector('.editor-content')
     if (!contentHtmlElement) return;
 
+    console.log('ssss')
+
     let pageContainerHtmlElement = document.querySelector('.page .container')
     markAsWatchedHtmlElement = document.querySelector('#program_buttons_video_watched button')
+
+    let videowWatchedTickHtmlElement = document.querySelector('#program_playlist .bg-gray-300 [data-area="watched-icon"]')
+    if (!videowWatchedTickHtmlElement)
+        videowWatchedTickHtmlElement = document.querySelector('[data-area="chapters"] .bg-gray-300 [data-area="watched-icon"]').parentNode
+
+    if (!videowWatchedTickHtmlElement) return;
 
     let contentChildrenHtmlElement = Array.from(contentHtmlElement.children)
 
@@ -170,40 +179,77 @@ function addMarkAsCompleteButton() {
       </div>
     `;
 
-    pageContainerHtmlElement.insertAdjacentHTML('beforeend', `
-        <div class="complete_button">
-            <div class="complete_button_wrapper">
-                <div class="checkmark">
-                    <div class="checkmark_wrapper">
-                        <div class="logo">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" 
-                            fill="#000000"><path d="M0 0h24v24H0V0z" fill="none"/>
-                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+    let getButtonHtml = (className) => {
+        return (`
+            <div class="complete_button ${className}">
+                <div class="complete_button_wrapper">
+                    <div class="checkmark">
+                        <div class="checkmark_wrapper">
+                            <div class="logo">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+                                <path d="M382-221.912 135.912-468l75.653-75.653L382-373.218l366.435-366.435L824.088-664 382-221.912Z"></path></svg>
+                            </div>
                         </div>
                     </div>
+                    <div class="content">
+                    </div>
+                    <div class="point">${pointHtml}</div>
                 </div>
-                <div class="content">
-                    Mark as complete
-                </div>
-                <div class="point">${pointHtml}</div>
             </div>
-        </div>
-    `)
+        `)
+    }
+
+    // let descriptionHtmlElement = document.querySelector('.content-description.program-description-text')
+    // if (descriptionHtmlElement && descriptionHtmlElement.innerHTML ) {
+    //     pageContainerHtmlElement.insertAdjacentHTML('beforeend', getButtonHtml('complete_button_full'))
+    // } else {
+
+    // }
+
+    // let programAboutHtmlElement = document.querySelector('#program_about');
+    // let descriptionWWrapperHtmlElement = programAboutHtmlElement.parentNode;
+    // programAboutHtmlElement.nextElementSibling.style.display = 'none'
+    // descriptionWWrapperHtmlElement.insertAdjacentHTML('beforebegin', getButtonHtml('complete_button_side'))
+
+    let buttonWrapperHtmlElement = document.querySelector('#program_buttons > div > div > div ')
+    console.log(buttonWrapperHtmlElement) //> [data-area="program-buttons"]
+    buttonWrapperHtmlElement.insertAdjacentHTML('beforeend', getButtonHtml('complete_button_main'))
+
+    completeButtonHtmlElement = document.querySelector('.complete_button');
+
+    let isVisisble = window.getComputedStyle(videowWatchedTickHtmlElement, null).display != 'none';
+    if (isVisisble) setButtonComplete()
+    else setButtonIncomplete()
 
     document.querySelector('#more_actions_btn[aria-haspopup]').style.display = 'none';
-
     addMarkAsCompleteButtonListener();
 }
 
 function addHeaderPoint() {
-    let navigationHtmlElement = document.querySelector('body > header > div > nav > ul > li.header--menu-account')
-    navigationHtmlElement.insertAdjacentHTML('beforebegin', `
-        <div class="header_point" style="display:none;">
-            <div class="point_value"></div>
-            <div class="point_xp_text">XP</div>
-        </div>
-    `)
-    headerPointHtmlElement = document.querySelector('.header_point');
+    let navigationHtmlElement = document.querySelector('body > header ul > li.header--menu-account')
+    if (navigationHtmlElement) {
+        navigationHtmlElement.insertAdjacentHTML('beforebegin', `
+            <div class="header_point" style="display:none;">
+                <div class="point_value"></div>
+                <div class="point_xp_text">XP</div>
+            </div>
+        `)
+        headerPointHtmlElement = document.querySelector('.header_point');
+    }
+}
+
+function hideBadgeText() {
+    let collectionDescriptionHtmlElement = document.querySelector('.program-description-text .editor-content');
+    if (!collectionDescriptionHtmlElement &&
+        document.querySelector('.collection-lable')) return;
+
+    paragraphHtmlElement = collectionDescriptionHtmlElement.querySelectorAll('p')
+    paragraphHtmlElement.forEach(htmlElement => {
+        let textContent = htmlElement.textContent
+        if (textContent.charAt(0) === '[' && textContent.charAt(textContent.length - 1) === ']') {
+            htmlElement.remove()
+        }
+    })
 }
 
 function addMarkAsCompleteButtonListener() {
@@ -239,10 +285,8 @@ function addMarkAsCompleteButtonListener() {
             playCoinAudio();
 
             userData.point = userData.point + point;
-            console.log(badgeUrl)
-            console.log(watchedIconCount, watchedIconLength)
+
             if (badgeUrl && watchedIconCount + 1 === watchedIconLength) {
-                console.log('badge')
                 userData.badge.push(badgeUrl)
 
                 sendDataToGoogleSheet({
@@ -261,6 +305,8 @@ function addMarkAsCompleteButtonListener() {
         }, 1000)
 
         if (userData.point < 0) userData.point = 0;
+        addPointToPage()
+
         let endPoint = userData.point;
 
         setUserData(userData);
@@ -278,7 +324,7 @@ function addMarkAsCompleteButtonListener() {
 }
 
 function showPointCelebration() {
-    if (point > 0) {
+    if (point > 10) {
         showCelebrationSvg('ester_egg')
     }
 }
@@ -334,7 +380,7 @@ function setButtonComplete() {
 function setButtonIncomplete() {
     completeButtonHtmlElement.classList.remove('complete_button_selected');
     completeButtonHtmlElement.querySelector('.logo').style.display = 'none';
-    completeButtonHtmlElement.querySelector('.content').textContent = 'Mark as complete'
+    completeButtonHtmlElement.querySelector('.content').textContent = 'Incomplete'
 }
 
 function addBagdeContainer() {
@@ -444,15 +490,22 @@ async function getCollectionBadge() {
 }
 
 function addCollectionNextVideoListener() {
-    let watchedIconHtmlElement = document.querySelectorAll('#program_playlist > div > div[data-area="chapters"] svg[data-area="watched-icon"]')
+    let watchedIconHtmlElement = document.querySelectorAll('div[data-area="chapters"] svg[data-area="watched-icon"]')
 
-    let playlistItemHtmlElement = document.querySelectorAll('#program_playlist div[data-controller="playlist-item"]')
+    let playlistItemHtmlElement = document.querySelectorAll('div[data-area="chapters"] div[data-controller="playlist-item"]')
     playlistItemHtmlElement.forEach((htmlElement, index) => {
         htmlElement.onclick = (event) => {
-            let watched = window.getComputedStyle(watchedIconHtmlElement[index]).display === 'block'
+            // let watched = window.getComputedStyle(watchedIconHtmlElement[index]).display === 'block'
 
-            if (watched) setButtonComplete()
-            else setButtonIncomplete()
+            // if (watched) setButtonComplete()
+            // else setButtonIncomplete()
+
+            setTimeout(() => {
+                addMarkAsCompleteButton()
+                setTimeout(() => {
+                    checkVideoDuration()
+                }, 1000)
+            }, 1000)
         }
     })
 }
@@ -578,12 +631,61 @@ function sendDataToGoogleSheet(data) {
     });
 }
 
+function checkVideoDuration() {
+    videoDurationInterval = setInterval(() => {
+        let videoDurationHtmlElement = document.querySelector('.uplayer-controls .timer');
+        let videoTooltipHtmlElement = document.querySelector('.uplayer-tooltip');
+
+        function timeToSeconds(timeString) {
+            const timeComponents = timeString.split(':').map(Number);
+
+            if (timeComponents.length !== 2 && timeComponents.length !== 3) {
+                console.error('Invalid time format. Please use "hh:mm:ss" or "mm:ss"');
+                return null;
+            }
+
+            let hours = 0;
+            let minutes = 0;
+            let seconds = 0;
+
+            if (timeComponents.length === 2) {
+                minutes = timeComponents[0];
+                seconds = timeComponents[1];
+            } else {
+                hours = timeComponents[0];
+                minutes = timeComponents[1];
+                seconds = timeComponents[2];
+            }
+
+            if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) {
+                console.error('Invalid time format. Please use valid numbers for hours, minutes, and seconds.');
+                return null;
+            }
+
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+
+        let videoDurationTime = timeToSeconds(videoDurationHtmlElement.innerText.trim())
+        let videoElapsedTime = videoTooltipHtmlElement ? timeToSeconds(videoTooltipHtmlElement.innerText.trim()) : -1;
+
+        let videoTimeRemaining = videoDurationTime - videoElapsedTime;
+
+        if (videoDurationTime > 0 && videoElapsedTime > 0 && videoTimeRemaining < 10) {
+            if (!completeButtonHtmlElement.classList.contains('complete_button_selected')) {
+                completeButtonHtmlElement.click()
+            }
+            clearInterval(videoDurationInterval)
+        }
+    }, 1000)
+}
+
 function beforeDataLoad() {
     addMarkAsCompleteButton();
     addHeaderPoint();
     addPointPopup();
     addBagdeContainer();
     getCollectionBadge();
+    hideBadgeText();
     addCollectionNextVideoListener();
     addCelebrationBox();
     addClearFilterListener();
@@ -593,6 +695,9 @@ function afterDataLoad() {
     addPointToPage();
     addBadgeToList();
     getLeaderboard();
+    setTimeout(() => {
+        checkVideoDuration();
+    }, 1000)
 }
 
 function initAll() {
